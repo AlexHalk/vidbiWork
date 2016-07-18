@@ -1,0 +1,1480 @@
+<?php 
+//autoplay is set to false for video loadup to start playing.
+//grey is default color for vidbi player, no option in wordpress to change this
+//onclicked & hide_button is if "more selections" have been pressed and renders the white screen
+	if (have_posts()) :
+		while (have_posts()) : the_post();
+$autoplay = "false";		
+if (isset($_GET['autoplay'])) $autoplay = "true";
+$grey = "false";
+if (isset($_GET['grey'])) $grey = "true";
+$onclicked = "false";
+$hide_button = "false";
+if (isset($_GET['hide_button'])) $hide_button = "true";
+if (isset($_GET['v'])){		
+		
+	if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', get_field('youtube_url'), $match)) {
+    	$video_id = $match[1];
+    } 
+    
+    $button_options = array();
+    for ($i=1; $i < 8; $i ++){
+    	if (get_field("option_".$i) && is_string(get_field("option_".$i))){
+    		$button_options[get_field("option_".$i)] = get_field("value_".$i);
+    		if (get_field("option_".$i) == "interviewquestions"){
+	    		preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', get_field("value_".$i), $match2);
+				$button_options[get_field("option_".$i)] = $match2[1];
+    		}
+    	}
+    }
+    
+    $permalink = get_permalink();
+    
+    $content = get_the_content();
+	$content = apply_filters('the_content', $content);
+	$content = str_replace(']]>', ']]&gt;', $content);
+	
+	$title = html_entity_decode(get_the_title(), ENT_NOQUOTES, 'UTF-8');
+	
+	$colors = get_field("colors");
+	$color_picker =  get_field("color_picker");
+	$colors_2 = get_field("colors_2");
+	$color_text =  get_field("color_text");
+	
+	$logo_Image = get_field("logo_Image");
+	
+	$userid = get_the_author_meta("ID");
+	$caps = get_user_meta($userid, 'wp_capabilities', true);
+	$roles = array_keys((array)$caps);
+	$hideConnect = 0;
+    if ( in_array( 's2member_level1', $roles ) || in_array( 's2member_level2', $roles ) || in_array( 's2member_level3', $roles ) || in_array( 's2member_level4', $roles ) || in_array( 's2member_level5', $roles )) {
+    	$hideConnect = 1;
+    }
+    
+//$colors is the color of vidbi player, $color_picker is the vidbi color choice, $colors_2 is the text color, $color_text is the text color choice
+//$logo_Image is upper left corner image, can be selected in wordpress
+	
+?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Vidbi</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/swfobject/2.2/swfobject.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script type="text/javascript" src="//cdn.embed.ly/player-0.0.10.min.js"></script>
+<!--<script src="swfobject.js"></script>
+<script src="jquery.js"></script>-->
+			    
+			    <script type="text/javascript">
+
+			    window.log = function(){
+  log.history = log.history || [];
+  log.history.push(arguments);
+  arguments.callee = arguments.callee.caller;  
+  if(this.console) console.log( Array.prototype.slice.call(arguments) );
+};
+(function(b){function c(){}for(var d="assert,count,debug,dir,dirxml,error,exception,group,groupCollapsed,groupEnd,info,log,markTimeline,profile,profileEnd,time,timeEnd,trace,warn".split(","),a;a=d.pop();)b[a]=b[a]||c})(window.console=window.console||{});
+			    
+			        var params = {
+			                allowscriptaccess: "always",
+			                menu: "false",
+			                allowFullScreen: "true"
+			            };
+			     
+			            var flashvars = {
+				            <?php
+				            	for ($i=1; $i < 8; $i ++){ 
+				            		if (get_field("option_".$i) == "interviewquestions"){ ?>
+										option<?php echo $i-1; ?>: "<?php echo get_field("option_".$i); ?>",
+							    		value<?php echo $i-1; ?>: encodeURIComponent("<?php echo $match2[1]; ?>"),
+										
+						    		<?php } 
+							    	else if (get_field("option_".$i)){ ?>
+							    		option<?php echo $i-1; ?>: "<?php echo get_field("option_".$i); ?>",
+							    		value<?php echo $i-1; ?>: encodeURIComponent("<?php echo get_field("value_".$i); ?>"),
+							    	<?php }
+							    	else{ ?>
+							    		option<?php echo $i-1; ?>: "",
+							    		value<?php echo $i-1; ?>: "",
+							    		<?php }
+							    }
+				            ?>
+				            customname: encodeURIComponent("<?php if (get_field('custom_item_name')) the_field('custom_item_name'); ?>"),
+				            referencestext: encodeURIComponent("<?php if (get_field('references_text')) the_field('references_text'); ?>"),
+				            resumeupload: encodeURIComponent("<?php if (get_field('resume_upload')) the_field('resume_upload'); ?>"),
+				            coverletterupload: encodeURIComponent("<?php if (get_field('cover_letter_upload')) the_field('cover_letter_upload'); ?>"),
+				            videoid: encodeURIComponent("<?php echo $video_id; ?>"),
+				            permalink: encodeURIComponent("<?php echo $permalink; ?>"),
+				            title: encodeURIComponent("<?php echo $title; ?>"),
+				            abouttext: encodeURIComponent('<?php echo str_replace("</p>","</p>\\n",str_replace("\n", "", $content)); ?>'),
+				            autoplay: "<?php echo $autoplay; ?>",
+				            hideconnect: "<?php echo $hideConnect; ?>"
+			            };
+			            var attributes = {};
+			     
+			            if (swfobject.hasFlashPlayerVersion("9") && !(navigator.userAgent.match(/Android/i) || navigator.userAgent.match(/BlackBerry/i) || navigator.userAgent.match(/iPhone|iPod/i) || navigator.userAgent.match(/IEMobile/i) == true)) {
+			                // SWFObject will load "animation.swf" into tag with id of "containerWrapper"
+			                //swfobject.embedSWF("<?php bloginfo("stylesheet_directory")?>/player.swf", "vidbi_alt", 586, 466, "9.0.0", false, flashvars, params, attributes);
+			            }
+			    </script>
+			 
+			  
+		<?php if (array_key_exists("map", $button_options)) { ?> 
+			  <script src="http://www.mapquestapi.com/sdk/js/v7.0.s/mqa.toolkit.js?key=Fmjtd%7Cluub2quy25%2Can%3Do5-9u7nla"></script> 
+			
+			  <script type="text/javascript"> 
+			
+			    /*An example of using the MQA.EventUtil to hook into the window load event and execute defined function 
+			    passed in as the last parameter. You could alternatively create a plain function here and have it 
+			    executed whenever you like (e.g. <body onload="yourfunction">).*/ 
+			
+			    MQA.EventUtil.observe(window, 'load', function() {
+				
+			      /*Create an object for options*/ 
+			      var options={
+			        elt:document.getElementById('map'),       /*ID of element on the page where you want the map added*/ 
+			        zoom:9,                                  /*initial zoom level of the map*/ 
+			        latLng:{lat:39.855982, lng:-75.141566},  /*center of map in latitude/longitude */ 
+			        mtype:'map',                              /*map type (map)*/ 
+			        bestFitMargin:0,                          /*margin offset from the map viewport when applying a bestfit on shapes*/ 
+			        zoomOnDoubleClick:true                    /*zoom in when double-clicking on map*/ 
+			      };
+			
+			      /*Construct an instance of MQA.TileMap with the options object*/ 
+			      window.map = new MQA.TileMap(options);
+			      
+			      MQA.withModule('largezoom', function() {
+	
+				    map.addControl(
+				      new MQA.LargeZoom(),
+				      new MQA.MapCornerPlacement(MQA.MapCorner.TOP_LEFT, new MQA.Size(5,5))
+				    );
+				
+				  });
+			      
+			      MQA.withModule('geocoder', function() {
+				    /*Override the POI construction function to customize the Rollover and InfoWindow states*/ 
+				    MQA.Geocoder.constructPOI=function(location){
+				      var lat=location.latLng.lat,
+				      lng=location.latLng.lng,
+				      street=location.street,
+				      city=location.adminArea5,
+				      state=location.adminArea3,
+				      p=new MQA.Poi({lat:lat,lng:lng});
+				      p.setInfoTitleHTML(p.getRolloverContent());
+				      p.setInfoContentHTML('<div style="white-space: nowrap">'+street + ' ' + city + ' ' 
+				        +state + '</div>');
+				      return p;
+				    };
+				
+				    /*Executes the geocode service with the postal code 80202*/ 
+				    map.geocodeAndAddLocations("<?php if (array_key_exists("map", $button_options)) echo $button_options['map']; ?>");
+				  });
+			      
+			    });
+			
+			  </script> 
+		<?php } ?>	  
+			    <script>
+			    	var tag = document.createElement('script');
+			    	tag.src = "https://www.youtube.com/iframe_api";
+			    	var firstScriptTag = document.getElementsByTagName('script')[0];
+			    	firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+			    	var player;
+			    	var ytplayer;
+			    	var interviewPlayer;
+			    	var button_request = new Array();
+			    	
+			    	<?php $button_counter = 0; 
+			    	foreach($button_options as $key => $value) { ?>
+			    		button_request[<?php echo $button_counter; ?>] = "<?php echo $key; ?>";
+					<?php
+						$button_counter++; 
+					} ?>
+					var addedButtons = 0;
+					
+					function onYouTubeIframeAPIReady() {
+					  ytplayer = new YT.Player('ytplayer', {
+					    videoId : '<?php echo $video_id; ?>',
+					    playerVars : { rel : 0, showinfo: 0, autohide : 1, color : "white", theme : "light", playerapiid: "ytplayer"<?php if ($autoplay == "true") echo ", autoplay : 1"; ?> },
+					    events: {
+					      'onStateChange': onPlayerStateChange,
+					      'onReady': onPlayerReady
+					    }
+					  });
+					  <?php if (array_key_exists("interviewquestions", $button_options)){ ?>
+					  interviewPlayer = new YT.Player('ytplayer2');
+					  <?php } ?>
+					 }
+					 
+					 function onPlayerReady(event) {
+					  var receiver = new playerjs.Receiver();
+
+						//player.js events
+						receiver.on('play', function(){
+						  ytplayer.playVideo();
+						  receiver.emit('play');
+						});
+						
+						receiver.on('pause', function(){
+						  ytplayer.pauseVideo();
+						  receiver.emit('pause');
+						});
+						
+						receiver.on('getDuration', function(callback){
+						  callback(ytplayer.getDuration());
+						});
+						
+						ytplayer.addEventListener('timeupdate', function(){
+						  receiver.emit('timeupdate', {
+						    seconds: ytplayer.getCurrentTime,
+						    duration: ytplayer.getDuration()
+						  });
+						});
+						
+						receiver.ready();
+					 } 
+					 
+					 function onPlayerStateChange(newState){
+						$(function(){
+							/*if (newState.data == "1"){
+								if ( $("#button_bar").hasClass("open")){
+									$("#button_bar").removeClass("open");
+									$("#button_bar").hide();
+									$("#button_bar").fadeIn(100);
+								}
+							}	
+							else if (newState.data == "2")
+								if ( !$("#button_bar").hasClass("open")){
+									$("#button_bar").addClass("open");
+									$("#button_bar").hide();
+									$("#button_bar").fadeIn(100);
+								}*/
+						});		
+					}
+					
+					$=jQuery;	 
+			    	$(function(){
+			    		//size of vidbi player
+			    		var maxMainButtons = Math.floor(($("#vidbi_alt").width()-26)/120);
+			    		maxMainButtons = (maxMainButtons  >= 4)? 4 : maxMainButtons;
+			    		var addMore = button_request.length > maxMainButtons;
+			    		
+			    		$('#map_container, #map, #ytplayer, #ytplayer2').css({width: $("#vidbi_alt").width()-26, height: $("#vidbi_alt").height()-151});
+			    		
+			    		if ($("#vidbi_alt").width() < 500)
+			    			$("#logo").text("");
+			    		
+			    		for (i = 0; i < maxMainButtons; i++){
+			    			var createdAnchor = $('<a target="_blank"></a>')
+			    			if (!(addMore && i == maxMainButtons - 1)){
+				    			switch(button_request[i]){
+					    			case "phone":
+					    				createdAnchor.addClass("phone").addClass("icon").attr("href","tel:<?php if (array_key_exists("phone", $button_options)) echo $button_options['phone']; ?>").text("Phone");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "email":
+					    				createdAnchor.addClass("email").addClass("icon").attr("href","mailto:<?php if (array_key_exists("email", $button_options)) echo $button_options['email']; ?>").text("Email");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "website":
+					    				createdAnchor.addClass("website").addClass("icon").attr("href","<?php if (array_key_exists("website", $button_options)) echo $button_options['website']; ?>").text("Website");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+									
+									case "donate":
+					    				createdAnchor.addClass("donate").addClass("icon").attr("href","<?php if (array_key_exists("donate", $button_options)) echo $button_options['donate']; ?>").text("Donate");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+									
+									case "buybook":
+				    				createdAnchor.addClass("buybook").addClass("icon").attr("href","<?php if (array_key_exists("buybook", $button_options)) echo $button_options['buybook']; ?>").text("Buy Book");
+				    				$("#button_bar").append(createdAnchor);	
+				    			break;
+									
+					    			case "rss":
+					    				createdAnchor.addClass("rss").addClass("icon").attr("href","<?php if (array_key_exists("rss", $button_options)) echo $button_options['rss']; ?>").text("RSS");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "blog":
+					    				createdAnchor.addClass("blog").addClass("icon").attr("href","<?php if (array_key_exists("blog", $button_options)) echo $button_options['blog']; ?>").text("Blog");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "map":
+					    				createdAnchor.addClass("map").addClass("icon").attr("href","http://vidbi.com").text("Map");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "custom":
+					    				createdAnchor.addClass("custom").addClass("icon").attr("href","<?php if (array_key_exists("custom", $button_options)) echo $button_options['custom']; ?>").text("<?php if (get_field('custom_item_name')) the_field('custom_item_name'); ?>");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "pinterest":
+					    				createdAnchor.addClass("pinterest").addClass("icon").attr("href","<?php if (array_key_exists("pinterest", $button_options)) echo $button_options['pinterest']; ?>").text("Pinterest");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "facebook":
+					    				createdAnchor.addClass("facebook").addClass("icon").attr("href","<?php if (array_key_exists("facebook", $button_options)) echo $button_options['facebook']; ?>").text("Facebook");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "twitter":
+					    				createdAnchor.addClass("twitter").addClass("icon").attr("href","<?php if (array_key_exists("twitter", $button_options)) echo $button_options['twitter']; ?>").text("Twitter");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "linkedin":
+					    				createdAnchor.addClass("linkedin").addClass("icon").attr("href","<?php if (array_key_exists("linkedin", $button_options)) echo $button_options['linkedin']; ?>").text("LinkedIn");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "youtube":
+					    				createdAnchor.addClass("youtube").addClass("icon").attr("href","<?php if (array_key_exists("youtube", $button_options)) echo $button_options['youtube']; ?>").text("YouTube");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			
+					    			case "digg":
+				    					createdAnchor.addClass("digg").addClass("icon").attr("href","<?php if (array_key_exists("digg", $button_options)) echo $button_options['digg']; ?>").text("Digg");
+										$("#button_bar").append(createdAnchor);	
+										addedButtons++;
+									break;
+									case "meetup":
+					    				createdAnchor.addClass("meetup").addClass("icon").attr("href","<?php if (array_key_exists("meetup", $button_options)) echo $button_options['meetup']; ?>").text("Meetup");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+									break;
+									case "foursquare":
+					    				createdAnchor.addClass("foursquare").addClass("icon").attr("href","<?php if (array_key_exists("foursquare", $button_options)) echo $button_options['foursquare']; ?>").text("Foursquare");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "wordpress":
+					    				createdAnchor.addClass("wordpress").addClass("icon").attr("href","<?php if (array_key_exists("wordpress", $button_options)) echo $button_options['wordpress']; ?>").text("WordPress");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "xing":
+					    				createdAnchor.addClass("xing").addClass("icon").attr("href","<?php if (array_key_exists("xing", $button_options)) echo $button_options['xing']; ?>").text("Xing");
+					    				$("#button_bar").append(createdAnchor);	
+					    				addedButtons++;
+					    			break;
+					    			case "chimein":
+					    				createdAnchor.addClass("chimein").addClass("icon").attr("href","<?php if (array_key_exists("chimein", $button_options)) echo $button_options['chimein']; ?>").text("Chime.in");
+					    				$("#button_bar").append(createdAnchor);	
+					    				addedButtons++;
+					    			break;
+					    			case "ziggs":
+					    				createdAnchor.addClass("ziggs").addClass("icon").attr("href","<?php if (array_key_exists("ziggs", $button_options)) echo $button_options['ziggs']; ?>").text("Ziggs");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "blogger":
+					    				createdAnchor.addClass("blogger").addClass("icon").attr("href","<?php if (array_key_exists("blogger", $button_options)) echo $button_options['blogger']; ?>").text("Blogger");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "delicious":
+					    				createdAnchor.addClass("delicious").addClass("icon").attr("href","<?php if (array_key_exists("delicious", $button_options)) echo $button_options['delicious']; ?>").text("Delicious");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "googleplus":
+					    				createdAnchor.addClass("googleplus").addClass("icon").attr("href","<?php if (array_key_exists("googleplus", $button_options)) echo $button_options['googleplus']; ?>").text("Google+");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "reddit":
+					    				createdAnchor.addClass("reddit").addClass("icon").attr("href","<?php if (array_key_exists("reddit", $button_options)) echo $button_options['reddit']; ?>").text("Reddit");
+					    				$("#button_bar").append(createdAnchor);	
+					    				addedButtons++;
+					    			break;
+					    			case "meetup":
+					    				createdAnchor.addClass("meetup").addClass("icon").attr("href","<?php if (array_key_exists("meetup", $button_options)) echo $button_options['meetup']; ?>").text("Meetup");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "stumbleupon":
+					    				createdAnchor.addClass("stumbleupon").addClass("icon").attr("href","<?php if (array_key_exists("stumbleupon", $button_options)) echo $button_options['stumbleupon']; ?>").text("StumbleUpon");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "interviewquestions":
+					    				createdAnchor.addClass("interviewquestions").addClass("icon").attr("href","<?php if (array_key_exists("interviewquestions", $button_options)) echo $button_options['interviewquestions']; ?>").text("Questions");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "resume":
+					    				createdAnchor.addClass("resume").addClass("icon").attr("href","<?php if (array_key_exists("resume", $button_options)){ 
+					    				if ($button_options['resume'] != "")
+					    					echo $button_options['resume'];
+					    				else the_field("resume_upload"); 
+					    				} ?>").text("Resume");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "references":
+					    				createdAnchor.addClass("references").addClass("icon").attr("href","<?php if (array_key_exists("references", $button_options)) echo $button_options['references']; ?>").text("References");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "coverletter":
+					    				createdAnchor.addClass("coverletter").addClass("icon").attr("href","<?php if (array_key_exists("coverletter", $button_options)){ 
+					    				if ($button_options['coverletter'] != "")
+					    					echo $button_options['coverletter'];
+					    				else the_field("cover_letter_upload"); 
+					    				} ?>").text("Letter");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "apartments":
+					    				createdAnchor.addClass("apartments").addClass("icon").attr("href","<?php if (array_key_exists("apartments", $button_options)) echo $button_options['apartments']; ?>").text("Apartments");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "homes":
+					    				createdAnchor.addClass("homes").addClass("icon").attr("href","<?php if (array_key_exists("homes", $button_options)) echo $button_options['homes']; ?>").text("Homes");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "land":
+					    				createdAnchor.addClass("land").addClass("icon").attr("href","<?php if (array_key_exists("land", $button_options)) echo $button_options['land']; ?>").text("Land");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "commercial":
+					    				createdAnchor.addClass("commercial").addClass("icon").attr("href","<?php if (array_key_exists("commercial", $button_options)) echo $button_options['commercial']; ?>").text("Commercial");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+					    			case "listings":
+					    				createdAnchor.addClass("listings").addClass("icon").attr("href","<?php if (array_key_exists("listings", $button_options)) echo $button_options['listings']; ?>").text("Listings");
+					    				$("#button_bar").append(createdAnchor);
+					    				addedButtons++;	
+					    			break;
+				    			}
+				    			switch (i){
+								case 0: createdAnchor.css("background-color", "#52A39C");
+								break;
+								case 1: createdAnchor.css("background-color", "#ED4047");
+								break;
+								case 2: createdAnchor.css("background-color", "#00AEEF");
+								break;
+								}
+			    			}
+			    			else {
+			    				createdAnchor.addClass("more").addClass("icon").attr("href","http://www.vidbi.com/").text("More"); // used to be ultimatevidbizcard.com, might be antiquated code? wm
+				    			$("#button_bar").append(createdAnchor);
+				    			addedButtons++;
+				    		}	
+				    	}
+				    	
+				    	var maxMoreButtons = Math.floor(($("#vidbi_alt").height()-100)/60);
+				    	for (i = 0; i < maxMoreButtons; i++){
+			    			var createdAnchor = $('<a target="_blank"></a>')
+			    			switch(button_request[i+addedButtons-1]){
+				    			case "phone":
+				    				createdAnchor.addClass("phone").addClass("icon").attr("href","tel:<?php if (array_key_exists("phone", $button_options)) echo $button_options['phone']; ?>").text("Phone");
+				    				$("#more_bar").append(createdAnchor);
+				    			break;
+				    			case "email":
+				    				createdAnchor.addClass("email").addClass("icon").attr("href","mailto:<?php if (array_key_exists("email", $button_options)) echo $button_options['email']; ?>").text("Email");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "website":
+				    				createdAnchor.addClass("website").addClass("icon").attr("href","<?php if (array_key_exists("website", $button_options)) echo $button_options['website']; ?>").text("Website");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+								
+								case "donate":
+				    				createdAnchor.addClass("donate").addClass("icon").attr("href","<?php if (array_key_exists("donate", $button_options)) echo $button_options['donate']; ?>").text("Donate");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+								
+								case "buybook":
+				    				createdAnchor.addClass("buybook").addClass("icon").attr("href","<?php if (array_key_exists("buybook", $button_options)) echo $button_options['buybook']; ?>").text("Buy Book");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+								
+				    			case "rss":
+				    				createdAnchor.addClass("rss").addClass("icon").attr("href","<?php if (array_key_exists("rss", $button_options)) echo $button_options['rss']; ?>").text("RSS");
+				    				$("#more_bar").append(createdAnchor);
+				    			break;
+				    			case "blog":
+				    				createdAnchor.addClass("blog").addClass("icon").attr("href","<?php if (array_key_exists("blog", $button_options)) echo $button_options['blog']; ?>").text("Blog");
+				    				$("#more_bar").append(createdAnchor);
+				    			break;
+				    			case "pinterest":
+				    				createdAnchor.addClass("pinterest").addClass("icon").attr("href","<?php if (array_key_exists("pinterest", $button_options)) echo $button_options['pinterest']; ?>").text("Pinterest");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "facebook":
+				    				createdAnchor.addClass("facebook").addClass("icon").attr("href","<?php if (array_key_exists("facebook", $button_options)) echo $button_options['facebook']; ?>").text("Facebook");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "twitter":
+				    				createdAnchor.addClass("twitter").addClass("icon").attr("href","<?php if (array_key_exists("twitter", $button_options)) echo $button_options['twitter']; ?>").text("Twitter");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "linkedin":
+				    				createdAnchor.addClass("linkedin").addClass("icon").attr("href","<?php if (array_key_exists("linkedin", $button_options)) echo $button_options['linkedin']; ?>").text("LinkedIn");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "youtube":
+				    				createdAnchor.addClass("youtube").addClass("icon").attr("href","<?php if (array_key_exists("youtube", $button_options)) echo $button_options['youtube']; ?>").text("YouTube");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "digg":
+				    				createdAnchor.addClass("digg").addClass("icon").attr("href","<?php if (array_key_exists("digg", $button_options)) echo $button_options['digg']; ?>").text("Digg");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "meetup":
+				    				createdAnchor.addClass("meetup").addClass("icon").attr("href","<?php if (array_key_exists("meetup", $button_options)) echo $button_options['meetup']; ?>").text("Meetup");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "foursquare":
+				    				createdAnchor.addClass("foursquare").addClass("icon").attr("href","<?php if (array_key_exists("foursquare", $button_options)) echo $button_options['foursquare']; ?>").text("Foursquare");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "wordpress":
+				    				createdAnchor.addClass("wordpress").addClass("icon").attr("href","<?php if (array_key_exists("wordpress", $button_options)) echo $button_options['wordpress']; ?>").text("WordPress");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "xing":
+				    				createdAnchor.addClass("xing").addClass("icon").attr("href","<?php if (array_key_exists("xing", $button_options)) echo $button_options['xing']; ?>").text("Xing");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "chimein":
+				    				createdAnchor.addClass("chimein").addClass("icon").attr("href","<?php if (array_key_exists("chimein", $button_options)) echo $button_options['chimein']; ?>").text("Chime.in");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "ziggs":
+				    				createdAnchor.addClass("ziggs").addClass("icon").attr("href","<?php if (array_key_exists("ziggs", $button_options)) echo $button_options['ziggs']; ?>").text("Ziggs");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "blogger":
+				    				createdAnchor.addClass("blogger").addClass("icon").attr("href","<?php if (array_key_exists("blogger", $button_options)) echo $button_options['blogger']; ?>").text("Blogger");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "delicious":
+				    				createdAnchor.addClass("delicious").addClass("icon").attr("href","<?php if (array_key_exists("delicious", $button_options)) echo $button_options['delicious']; ?>").text("Delicious");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "googleplus":
+				    				createdAnchor.addClass("googleplus").addClass("icon").attr("href","<?php if (array_key_exists("googleplus", $button_options)) echo $button_options['googleplus']; ?>").text("Google+");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "reddit":
+				    				createdAnchor.addClass("reddit").addClass("icon").attr("href","<?php if (array_key_exists("reddit", $button_options)) echo $button_options['reddit']; ?>").text("Reddit");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "meetup":
+				    				createdAnchor.addClass("meetup").addClass("icon").attr("href","<?php if (array_key_exists("meetup", $button_options)) echo $button_options['meetup']; ?>").text("Meetup");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "stumbleupon":
+				    				createdAnchor.addClass("stumbleupon").addClass("icon").attr("href","<?php if (array_key_exists("stumbleupon", $button_options)) echo $button_options['stumbleupon']; ?>").text("StumbleUpon");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "map":
+				    				createdAnchor.addClass("map").addClass("icon").attr("href","http://vidbi.com").text("Map");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "custom":
+				    				createdAnchor.addClass("custom").addClass("icon").attr("href","<?php if (array_key_exists("custom", $button_options)) echo $button_options['custom']; ?>").text("<?php if (get_field('custom_item_name')) the_field('custom_item_name'); ?>");
+				    				$("#more_bar").append(createdAnchor);	
+				    			break;
+				    			case "interviewquestions":
+					    				createdAnchor.addClass("interviewquestions").addClass("icon").attr("href","<?php if (array_key_exists("interviewquestions", $button_options)) echo $button_options['interviewquestions']; ?>").text("Questions");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "resume":
+					    				createdAnchor.addClass("resume").addClass("icon").attr("href","<?php if (array_key_exists("resume", $button_options)) { 
+					    				if ($button_options['resume'] != "")
+					    					echo $button_options['resume'];
+					    				else the_field("resume_upload"); 
+					    				} ?>").text("Resume");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "references":
+					    				createdAnchor.addClass("references").addClass("icon").attr("href","<?php if (array_key_exists("references", $button_options)) echo $button_options['references']; ?>").text("References");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "coverletter":
+					    				createdAnchor.addClass("coverletter").addClass("icon").attr("href","<?php if (array_key_exists("coverletter", $button_options)) { 
+					    				if ($button_options['coverletter'] != "")
+					    					echo $button_options['coverletter'];
+					    				else the_field("cover_letter_upload"); 
+					    				} ?>").text("Letter");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "apartments":
+					    				createdAnchor.addClass("apartments").addClass("icon").attr("href","<?php if (array_key_exists("apartments", $button_options)) echo $button_options['apartments']; ?>").text("Apartments");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "homes":
+					    				createdAnchor.addClass("homes").addClass("icon").attr("href","<?php if (array_key_exists("homes", $button_options)) echo $button_options['homes']; ?>").text("Homes");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "land":
+					    				createdAnchor.addClass("land").addClass("icon").attr("href","<?php if (array_key_exists("land", $button_options)) echo $button_options['land']; ?>").text("Land");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "commercial":
+					    				createdAnchor.addClass("commercial").addClass("icon").attr("href","<?php if (array_key_exists("commercial", $button_options)) echo $button_options['commercial']; ?>").text("Commercial");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+					    			case "listings":
+					    				createdAnchor.addClass("listings").addClass("icon").attr("href","<?php if (array_key_exists("listings", $button_options)) echo $button_options['listings']; ?>").text("Listings");
+					    				$("#more_bar").append(createdAnchor);
+					    			break;
+
+			    			}
+				    	}
+				    	
+				    	var maxSocialButtons = Math.floor(($("#vidbi_alt").width()-135)/45);
+				    	maxSocialButtons = (maxSocialButtons <= 10) ? maxSocialButtons : 10;
+				    	for (i = 0; i < maxSocialButtons; i++){
+			    			var createdAnchor = $('<a target="_blank"></a>')
+			    			if (i == (maxSocialButtons - 1)){
+								createdAnchor.addClass("more_share_icon").attr("href","http://api.addthis.com/oexchange/0.8/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("More...");
+				    				$("#social_bar").append(createdAnchor);
+							}
+			    			else switch(i){
+				    			case 0:
+				    				createdAnchor.addClass("share_email").addClass("share_icon").attr("href","mailto: ?subject=Vidbi&body=Check out the hottest new marketing tool in cutting edge digital services! See my vidbi here: <?php echo $permalink; ?>").text("Email");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 1:
+				    				createdAnchor.addClass("facebook").addClass("share_icon").attr("href","http://api.addthis.com/oexchange/0.8/forward/facebook/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("Facebook");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 2:
+				    				createdAnchor.addClass("twitter").addClass("share_icon").attr("href","http://api.addthis.com/oexchange/0.8/forward/twitter/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("Twitter");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 3:
+				    				createdAnchor.addClass("youtube").addClass("share_icon").attr("href","http://youtube.com").text("YouTube");
+				    				//$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 4:
+				    				createdAnchor.addClass("linkedin").addClass("share_icon").attr("href","http://api.addthis.com/oexchange/0.8/forward/linkedin/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("LinkedIn");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 5:
+				    				createdAnchor.addClass("vidbi").addClass("share_icon").attr("href","http://vidbi.com/").text("Vidbi");
+				    				//$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 6:
+				    				createdAnchor.addClass("pinterest").addClass("share_icon").attr("href","http://api.addthis.com/oexchange/0.8/forward/pinterest/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("Pinterest");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 7:
+				    				createdAnchor.addClass("tumblr").addClass("share_icon").attr("href","http://api.addthis.com/oexchange/0.8/forward/tumblr/offer?url=<?php echo $permalink; ?>&pubid=ra-4fa6a2fa247ed381").text("Tumblr");
+				    				$("#social_bar").append(createdAnchor);	
+				    			break;
+				    			case 8: 
+				    				createdAnchor.addClass("instagram").addClass("share_icon").attr("href","http://instagram.com/").text("Instagram");
+				    				//$("#social_bar").append(createdAnchor);	
+				    			break;
+			    			}
+				    	}
+				    	/*cardholer - text next to logo_image*/
+				    	$("#cardholder").click(function(e){
+					    	e.preventDefault();
+					    	appendWhiteBg();
+					    	appendBack();
+					    	$("#map_container").hide();
+					    	$("#more_bar").hide();
+					    	$("#about_text").show();
+					    	$("#ytplayer").addClass("hidden");
+				    	})
+
+				    	/*bottom 'more' click*/
+				    	$(".more").click(function(e){
+					    	e.preventDefault();
+					    	appendWhiteBg();
+					    	appendBack();
+					    	$("#map_container").hide();
+					    	$("#about_text").hide();
+					    	$("#more_bar").show();
+					    	$("#references_text").hide();
+					    	$("#ytplayer2").hide();
+					    	$("#ytplayer").addClass("hidden");
+				    	})
+				    	
+				    	$(".map").click(function(e){
+					    	e.preventDefault();
+					    	appendWhiteBg();
+					    	appendBack();
+					    	$("#about_text").hide();
+					    	$("#more_bar").hide();
+					    	$("#map_container").show();
+					    	$("#references_text").hide();
+					    	$("#ytplayer2").hide();
+					    	$("#ytplayer").addClass("hidden");
+				    	})
+				    	
+				    	$(".references").click(function(e){
+					    	e.preventDefault();
+					    	appendWhiteBg();
+					    	appendBack();
+					    	$("#about_text").hide();
+					    	$("#more_bar").hide();
+					    	$("#map_container").hide();
+					    	$("#references_text").show();
+					    	$("#ytplayer2").hide();
+					    	$("#ytplayer").addClass("hidden");
+				    	})
+				    	
+				    	$(".interviewquestions").click(function(e){
+					    	e.preventDefault();
+					    	appendWhiteBg();
+					    	appendBack();
+					    	$("#about_text").hide();
+					    	$("#more_bar").hide();
+					    	$("#map_container").hide();
+					    	$("#references_text").hide();
+					    	$("#ytplayer2").show();
+					    	$("#ytplayer").addClass("hidden");
+					    	player.pauseVideo();
+				    	})
+				    					    	
+				    	$('#vidbi_alt').on('click', '.back', function(e) {
+						    e.preventDefault();
+						    removeWhiteBg();
+						    removeBack();
+						    $("#more_bar").hide();
+						    $("#about_text").hide();
+						    $("#map_container").hide();
+						    $("#references_text").hide();
+					    	$("#ytplayer2").hide();
+						    $("#ytplayer").removeClass("hidden");
+						    interviewPlayer.stopVideo();
+						});
+
+				    	/*uppon click, video goes away and white screen shows up*/
+				    	function appendWhiteBg(){
+					    	$("#ytplayer").after('<div class="white_bg" style="width: '+$("#ytplayer").width()+'px; height: '+$("#ytplayer").height()+'px;"></div>');
+				    	}
+
+				    	/*on back click, video comes back up*/
+				    	function removeWhiteBg(){
+					    	$(".white_bg").remove();
+				    	}
+
+				    	/*when white screen shows up, back button selection shows up*/
+				    	function appendBack(){
+				    		var backAnchor = $('<a></a>');
+				    		backAnchor.addClass("back").addClass("icon").attr("href","http://vidbi.com/").text("Back to Video");
+					    	$("#vidbi_alt").append(backAnchor);
+				    	}
+
+				    	/*when video shows up, back button goes away*/
+				    	function removeBack(){
+					    	$(".back").remove();
+				    	}
+				    		
+			    	});
+			    </script>
+			    
+			    <style>
+					@font-face {
+					font-family: Blippo-Heavy;
+					src: url('http://www.vidbi.com/font/blippo.eot'); /* IE6+ */  
+					src: url('http://www.vidbi.com/font/blippo.ttf') format('truetype'), /* Saf3+,Chrome,Opera10+ */
+						 url('http://www.vidbi.com/font/blippo.woff') format('woff'), /* FF3.6 */ 
+						 url('http://www.vidbi.com/font/blippo.woff2') format('woff2')  ;
+								}
+					
+		
+						
+					
+					body, html {
+				    	overflow: hidden;
+				    	height: 100%;
+			    	}
+					
+			    	body, html, div, blockquote, img, label, p, h1, h2, h3, h4, h5, h6, pre, ul, ol,  
+					li, dl, dt, dd, form, a, fieldset, input, th, td  {  
+						margin: 0; padding: 0; border: 0; outline: none;  
+					}  
+					  
+					body {  
+						line-height: 1;  
+						font-size: 88% /* Decide for yourself if you want to include this. */;  
+					}  
+					  
+					h1, h2, h3, h4, h5, h6  {  
+						font-size: 100%;  
+						padding: .6em 0;  
+						margin: 0 15px;  
+					}  
+					  
+					ul, ol  {  
+						list-style: none;  
+					}  
+					  
+					a  {  
+						color: black;  
+						text-decoration: none;  
+					}  
+					  
+					a:hover  {  
+						text-decoration: none;
+						opacity: 0.7;  
+					}  
+					  
+					.floatLeft  {  
+						float: left;  
+						padding: .5em .5em .5em 0;  
+					}  
+					  
+					.floatRight  {  
+						float: rightright;  
+						padding: .5em 0 .5em .5em;  
+					}  
+					
+			    	/*vidbi_alt - the name of the vidbi player WHERE THE DYNAMIC SIZING SHOULD TAKE PLACE FOR CSS*/
+			    	#vidbi_alt{
+						/*width:100%;*/
+
+						/*height:100%;*/
+
+						padding-bottom: 1.000em;
+
+						position: relative;
+						font-family: Arial, sans-serif;
+						font-size: 12px;
+						overflow: hidden;
+						background-color: <?php 
+											if ($grey == 'true'){ echo "#CCCCCC"; }
+											else if( $colors || $color_picker ) { echo ($color_picker ? $color_picker : $colors ); }
+											else echo '#E3762A';
+										  ?>;
+						}
+			
+						/*logoImage - upper left corner image, can be changed in wordpress*/
+						#logoImage{
+							position: absolute;
+							top: 18px;
+							left: 15px;
+							height: 13px;
+							padding: 7px 0 0 61px;
+							/*The whole path must be present in order for default vidbi image to show up*/
+							/*CHANGE: theultimate.... to vidbi's url*/
+							background: url(<?php if ($logo_Image == null){echo "http://theultimatevideobusinesscard.com/wp-content/themes/austin-child/img/vidbi.png"; }
+													else echo $logo_Image; ?>);
+							
+					}
+					
+					/* 'Your Video Business Card' CSS
+					
+						#logo{
+				    		position: absolute;
+				    		top: 17px;
+				    		left: 14px;
+							height: 20px;
+				    		padding: 7px 0 0 85px;
+				    		
+							color: <?php 
+				    							//if ($grey == 'true'){ echo "#CCCCCC"; }
+				    							//else if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+				    							//else echo '#005B92';	
+									?>;
+			    	}
+						Also, Uncomment the PHP Above*/ 
+						
+					/*logo2 - */
+					#logo2{
+						font-size: 15px;
+						position: absolute;
+						height: 20px;
+						font-family:  Arial, sans-serif;
+						padding: 21px 0 0 82px;
+						
+						color: <?php 
+						if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+						else echo '#005B92';
+						?>;
+					}
+					
+					/*cardholer - title of vidbi video*/
+			    	#cardholder {
+				    	position: absolute;
+				    	top: 21px;
+				    	right: 105px;
+				    	text-align: right; 	
+				    	font-size: 15px;
+				    	color: <?php 
+				    	if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+				    	else echo '#005B92';
+				    	?>;
+				    	
+			    	}
+
+					/*get_vidbi - upper right button*/
+			    	#get_vidbi {
+			    	/*This should be an embed code option*/
+				    	position: absolute;
+				    	top: 10px;
+				    	right: 13px;			    	
+				    	background: url(http://theultimatevideobusinesscard.com/wp-content/themes/austin-child/img/get_vidbi.png);	
+				    	background-image: linear-gradient(top, #6496c8, #346392);
+				    	box-shadow: inset 0 0 0 1px #27496d;
+				    	border: none;
+				    	border-radius: 5px;
+				    	width: 85px;
+				    	height: 35px;
+				    	
+				    	<?php if ($hide_button == 'true'){echo "display: none;"; } ?>
+			    	}
+			    	
+			    	/*get_vidbi:active - needed for clicked effect*/
+			    	#get_vidbi:active {
+			    		box-shadow: inset 0 0 0 1px #FFF, inset 0 8px 30px #193047;
+			    	}
+			    
+					
+			    	#ytplayer, #ytplayer2 {
+				    	top: 59px;
+				    	left: 14px;
+				    	position: relative;
+				    	z-index: 0;
+			    	}
+
+			    	#ytplayer2 {
+				    	position: absolute;
+			    	}
+					
+			    	#ytplayer.hidden {
+			    		-webkit-transform: translateX(-2048px);
+			    	}
+					
+			    	#ytplayer2 {
+				    	display: none;
+			    	}
+					
+					/*button_bar - to the right of the connect text*/
+			    	#button_bar {
+				    	bottom: 40px;
+				    	left: 100px;
+				    	width: 470px;
+				    	position: absolute;
+				    	z-index: 100;
+			    	}
+			    	
+			    	/*
+			    	#button_bar:hover{
+			    		background-color: green;
+			    	}
+					*/
+					
+			    	#button_bar.open {
+				    	right: -42px;
+			    	}
+					
+			    	#more_bar .icon {
+				    	background-color: #999;
+			    	}
+					
+					/*more_bar - renders if needed*/
+			    	#more_bar {
+				    	top: 70px;
+				    	left: 25px;
+				    	width: 190px;
+				    	position: absolute;
+				    	display: none;
+			    	}
+					
+					/*social_bar - to the right of share text*/
+			    	#social_bar {
+				    	width: 75%;
+				    	position: absolute;
+				    	bottom: 13px;
+				    	left: 115px;
+			    	}
+					
+					/*about_text, references_text - */
+			    	#about_text, #references_text {
+				    	top: 70px;
+				    	left: 25px;
+				    	width: 300px;
+				    	padding-right: 20px;
+				    	position: absolute;
+				    	display: none;
+				    	height: 270px;
+				    	overflow: auto;
+			    	}
+					
+			    	#about_text p {
+				    	margin-bottom: 10px;
+			    	}
+					
+			    	#map_container {
+				    	/*width: 560px;
+				    	height: 315px;*/
+				    	position: absolute;
+				    	top: 59px;
+				    	left: 14px;
+				    	display: none;
+			    	}
+					
+			    	#map {
+				    	/*width: 560px;
+				    	height: 315px;*/
+				    }
+					
+					/*orange_right - sliver of space to the right vertical*/
+			    	#orange_right {
+			    		width: 13px;
+				    	height: 100%;
+				    	right: 0;
+				    	top: 0;
+				    	background-color: <?php 
+				    	if ($grey == 'true'){ echo "#CCCCCC"; }
+						else if( $colors || $color_picker ) { echo ($color_picker ? $color_picker : $colors ); }
+						else echo '#E3762A';
+						?>;
+				    	position: absolute;
+				    	z-index: 101;
+			    	}
+					
+					/*share, connect - text for each*/
+			    	#share, #connect {
+				    	bottom: 15px;
+				    	font-size: 15px;
+				    	left: 14px;
+				    	position: absolute;
+				    	color: <?php 
+						if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+				    	else echo '#005B92';
+						?>;
+				    	background: url(<?php bloginfo("stylesheet_directory")?>/img/share.png) no-repeat;
+				    	padding-left: 23px;
+				    	padding-top: 3px;
+			    	}
+					
+			    	#connect{
+						bottom: 50px;
+						background: url(<?php bloginfo("stylesheet_directory")?>/img/connect.png) no-repeat;
+						}
+					#connect2{
+						bottom: 50px;
+						font-family: entypo, Arial, sans-serif;
+						font-size: 36px;
+						padding: 10px 0 0 70px;
+						color: <?php
+						if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+						else echo '#005B92';
+						?>;
+						}
+						
+					#share{
+						left: 28px;
+						}
+						
+					#share2{
+						left: 28px;
+					font-family: entypo, Arial, sans-serif;
+					font-size: 36px;
+						padding: 10px 0 0 70px;
+						color: <?php
+						if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+						else echo '#005B92';
+						?>;
+						}
+
+			    	
+					/*icon - button bar icon*/
+			    	.icon {
+				    	width: 95px;
+				    	color: #FFF;
+				    	background: #CCC no-repeat 4px 4px;
+				    	height: 22px;
+				    	display: block;
+				    	padding: 8px 0 0 55px;
+				    	margin-bottom: 8px;
+				    	opacity: 0.9;
+				    	border: 1px solid transparent;
+				    	transition: 0.3s ease-in-out;
+			    	}
+					
+					/*icon:hover - needed for hover option for icon*/
+			    	.icon:hover {
+			    		opacity: 0.7;
+			    		border: 1px solid #FFF;
+			    		border-radius: 11px;
+			    	}
+					
+					/*button_bar .icon - space rendered for icons in button bar*/
+			    	#button_bar .icon {
+				    	width: 55px;
+				    	display: inline-block;
+				    	padding-left: 35px;
+				    	padding-right: 10px;
+				    	padding-top: 9px;
+				    	margin-left: 15px;
+			    	}
+/* NOT WORKING
+			    	
+			    	.vidBi-player-wrapper{
+			    		max-width: 420px !important;
+			    		margin: 0 auto !important;
+						position: relative !important;
+			    	}
+
+			    	iframe{
+			    		position: absolute !important;
+			    		top: 0 !important;
+			    		left: 0 !important;
+			    		width: 100% !important;
+			    		height: 100% !important;
+			    	}
+					*/
+
+					/*share_icon - share icons right to share text*/
+			    	.share_icon {
+				    	width: 22px;
+				    	color: #FFF;
+				    	height: 22px;
+				    	display: inline-block;
+				    	margin-right: 5px;
+				    	padding: 5px;
+				    	border-radius: 2px;
+				    	font-size: 12px;
+				    	text-indent: -9999px;
+				    	background-repeat: no-repeat;
+				    	background-position: 0 10px;
+			    	}
+					
+			    	.share_icon:hover {
+			    		opacity: 0.7;
+			    	}
+					
+			    	.more_share_icon {
+				    	text-indent: 0;
+				    	width: auto;
+				    	vertical-align: bottom;
+				    	color: <?php 
+				    	if( $colors_2 || $color_text ) { echo ($color_text ? $color_text : $colors_2 ); }
+				    	else echo '#005B92';
+				    	?>;
+						}
+			    	
+					.share_email{
+			    		width: 34px;
+			    		background-image: url(<?php bloginfo("stylesheet_directory")?>/img/share_email.png);
+			    	}
+			    	.facebook{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/facebook.png);
+			    	}
+			    	.instagram{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/instagram.png);
+			    	}
+			    	.blog{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/blog.png);
+			    	}
+			    	.phone{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/phone.png);
+			    	}
+			    	.more{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/more.png);
+			    	}
+			    	.map{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/map.png);
+			    	}
+			    	.rss{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/rss.png);
+			    	}
+			    	.website{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/web.png);
+			    	}
+					
+					.donate{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/googleplus.png!important);
+			    	}
+					.buybook{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/seasons-change.png);
+			    	}
+					
+			    	.email{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/email.png);
+			    	}
+			    	.youtube{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/youtube.png);
+			    	}
+			    	.tumblr{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/tumblr.png);
+			    	}
+			    	.twitter{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/twitter.png);
+			    	}
+			    	.linkedin{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/linkedin.png);
+			    	}
+			    	.pinterest{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/pinterest.png);
+			    	}
+			    	.vidbi{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/vidbi_icon.png);
+			    	}
+			    	.custom{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/custom.png);
+			    	}
+			    	.digg{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/digg.png);
+			    	}
+			    	.meetup{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/meetup.png);
+			    	}
+			    	.foursquare{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/foursquare.png);
+			    	}
+			    	.wordpress{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/wordpress.png);
+			    	}
+			    	.xing{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/xing.png);
+			    	}
+			    	.chimein{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/chimein.png);
+			    	}
+			    	.ziggs{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/ziggs.png);
+			    	}
+			    	.blogger{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/blogger.png);
+			    	}
+			    	.delicious{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/delicious.png);
+			    	}
+			    	.googleplus{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/googleplus.png);
+			    	}
+			    	.reddit{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/reddit.png);
+			    	}
+			    	.meetup{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/meetup.png);
+			    	}
+			    	.land{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/land.png);
+			    	}
+			    	.homes{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/homes.png);
+			    	}
+			    	.commercial{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/commercial.png);
+			    	}
+			    	.apartments{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/apartments.png);
+			    	}
+			    	.listings{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/listings.png);
+			    	}
+			    	.references{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/references.png);
+			    	}
+			    	.interviewquestions{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/interviewquestions.png);
+			    	}
+			    	.resume{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/resume.png);
+			    	}
+			    	.coverletter{
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/coverletter.png);
+			    	}
+			    	/*back - css for back button upon render for white_bg*/
+			    	.back {
+				    	background-image: url(<?php bloginfo("stylesheet_directory")?>/img/back.png);
+				    	right: 25px;
+				    	bottom: 92px;
+				    	position: absolute;
+				    	background-color: #ED6F76;
+			    	}
+			    	/*white_bg - css, renders when needed*/
+			    	.white_bg {
+				    	background-color: #FFFFFF;
+				    	position: absolute;
+				    	top: 59px;
+				    	left: 14px; 
+			    	}
+			    	<?php if ($hideConnect){ ?>
+						#share{
+				    	bottom: 30px;
+				    	}
+						#social_bar{
+				    	bottom: 28px;
+				    	}
+					<?php }	?>
+					
+					
+
+
+					
+					
+			    </style>
+
+
+
+
+
+
+</head>
+
+<body>
+			    
+			    <div id="vidbi_alt">
+                	
+					<a id="logoImage" href="http://vidbi.com/" target="_blank"></a>
+			    	<a id="logo" href="http://vidbi.com/" target="_blank"></a>
+				    <a id="cardholder" href="http://vidbi.com/" target="_blank"><?php echo strlen($title) > 25 ? substr($title,0,55)."..." : $title; ?> &#9660;</a>
+				    
+				    <a id="get_vidbi" href="#" target="_blank"<button></a></button>
+				    
+				    <?php /*change href above to embed code
+				    
+				    make tiny text box show up when clicked "get vidbi" to have embed code appear
+				    
+				    generate embed code for each vidbi video*/?>
+				    
+				   	<a id="get_vidbi_embed" href="#">
+				   
+					<div id="ytplayer"></div>
+					<?php /* <iframe id="ytplayer" type="text/html" src="https://www.youtube.com/embed/<?php echo $video_id; ?>?rel=0&showinfo=0&autohide=1&color=white&theme=light&playerapiid=ytplayer<?php if ($autoplay == "true") echo "&autoplay=1"; ?>" frameborder="0" allowfullscreen></iframe> */ ?>
+					<?php if (array_key_exists("interviewquestions", $button_options)){ ?>
+						<iframe id="ytplayer2" type="text/html" src="https://www.youtube.com/embed/<?php echo $button_options['interviewquestions']; ?>?rel=0&showinfo=0&autohide=1&color=white&theme=light&playerapiid=ytplayer" frameborder="0" allowfullscreen></iframe>
+					<?php } ?>
+					<div id="map_container"><div id="map"></div></div>
+					<div id="more_bar"></div>
+					<div id="references_text">
+						<?php if (get_field("references_text")) the_field("references_text"); ?>
+					</div>
+					<div id="about_text">
+						<?php echo $content; ?>
+					</div>
+					
+					<?php if (!$hideConnect){ ?>
+                    <p id="connect">Connect:</p>
+                    <div id="button_bar" class="open"></div>
+                    <?php } ?>
+                        <p id="share">Share:</p>
+                        <div id="social_bar"></div>
+                        <div id="orange_right"></div>
+
+				</div>
+</body>
+</html>				
+<?php }
+else { ?>
+
+	<?php
+/**
+ * @package WordPress
+ * @subpackage U-Design
+ */
+
+
+    get_header();
+?>
+
+<?php mo_exec_action('before_content'); ?>
+
+    <div id="content" class="<?php echo mo_get_content_class(); ?>">
+
+        <?php mo_exec_action('start_content'); ?>
+
+        <div class="hfeed">
+
+            
+
+                    <?php mo_exec_action('before_entry'); ?>
+
+                    <article id="post-<?php the_ID(); ?>" <?php post_class(); ?>>
+
+                        <?php mo_exec_action('start_entry'); ?>
+
+                        <?php echo mo_get_entry_title(); ?>
+
+
+                        <?php
+                        echo '<div class="entry-meta">' . mo_entry_terms_list('videocard_category') . mo_entry_comments_link() . '</div>';
+                        ?>
+
+                        <div class="entry-content clearfix">			    	
+			    <?php $user = wp_get_current_user();
+				if ( in_array( 's2member_level1', $user->roles ) || in_array( 's2member_level2', $user->roles ) || in_array( 's2member_level3', $user->roles ) || in_array( 's2member_level4', $user->roles ) || in_array( 's2member_level5', $user->roles ) || in_array( 's2member_level6', $user->roles ) || in_array( 's2member_level7', $user->roles ) || in_array( 's2member_level8', $user->roles ) || in_array( 's2member_level9', $user->roles )  || in_array( 's2member_level10', $user->roles )  || in_array( 's2member_level11', $user->roles )  || in_array( 's2member_level12', $user->roles )  || in_array( 's2member_level13', $user->roles )  || in_array( 's2member_level14', $user->roles )   || in_array( 's2member_level15', $user->roles )) { ?>
+					<p><a href="<?php bloginfo("home"); ?>/video-card-entry">Edit Video Card</a></p>	
+				<?php } ?>
+			    	<div class="vidBi-player-wrapper">
+					    <iframe type="text/html" width="586" height="466" src="<?php if (isset($_GET['autoplay'])) echo add_query_arg(array("v"=>"1", "autoplay"=>1),get_permalink()); else echo add_query_arg("v","1",get_permalink()); ?>" frameborder="0" allowfullscreen></iframe>
+				    </div>
+				    <br /><br />
+				    <?php the_content(); ?>
+				    
+				     </div>
+                        <!-- .entry-content -->
+
+                        <?php $post_tags = wp_get_post_tags($post->ID);
+
+                        if (!empty($post_tags)) : ?>
+
+                            <div class="entry-meta">
+
+                                <div class="taglist">
+
+                                    <i class="icon-tags2"></i>
+
+                                    <?php echo mo_entry_terms_list('post_tag'); ?>
+
+                                </div>
+
+                            </div>
+
+                        <?php endif; ?>
+
+                        <?php mo_exec_action('end_entry'); ?>
+
+                    </article><!-- .hentry -->
+
+                    <?php mo_exec_action('after_entry'); ?>
+
+                    <?php mo_display_sidebar('after-singular-post'); ?>
+
+                    <?php mo_exec_action('after_singular'); ?>
+
+                    <?php comments_template('/comments.php', true); // Loads the comments.php template.   ?>
+
+                
+
+        </div>
+        <!-- .hfeed -->
+
+        <?php mo_exec_action('end_content'); ?>
+
+        <?php get_template_part('loop-nav'); // Loads the loop-nav.php template.   ?>
+
+    </div><!-- #content -->
+
+<?php mo_exec_action('after_content'); ?>
+
+<?php get_sidebar(); ?>
+
+
+<?php
+
+get_footer(); 
+
+	
+}
+endwhile; endif; ?>
